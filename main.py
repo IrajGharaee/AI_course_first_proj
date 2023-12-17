@@ -2,7 +2,8 @@ from collections import deque
 
 
 class Node:
-    complete_path = ""
+    complete_path = []
+    energy = 500
 
     @staticmethod
     def boosters(boost):
@@ -35,8 +36,9 @@ class Node:
     def path(self, p=""):
         if not isinstance(self.parent, list) and self.parent:
             parent_node, direction = self.parent
-            print(self.row, self.col, direction)
-            Node.complete_path = direction + Node.complete_path
+            print(direction + "\n", self.row, self.col)
+            Node.energy = Node.energy + self.boost - self.energy_cost
+            Node.complete_path.append([direction, self.boost - self.energy_cost])
             parent_node.path()
 
     def add_children(self, child, direction):
@@ -66,24 +68,51 @@ def successor(node, grid):
 
 
 def bfs(start_node, grid, targets):
-    last_node = 0
-    queue = deque([(start_node, 500)])
+    queue = deque([start_node])
     while queue:
-        current_node, total_energy = queue.popleft()
+        current_node = queue.popleft()
         successor(current_node, grid)
         for neighbor in current_node.children:
             if (not neighbor.isVisited) & (neighbor.isOpen):
                 neighbor.isVisited = True
-                total_energy += neighbor.boost - neighbor.energy_cost
-                queue.append((neighbor, total_energy))
-                last_node = neighbor
+                queue.append(neighbor)
                 if neighbor.isTarget:
                     targets -= 1
-                    last_node.path()
-                    print(Node.complete_path)
+                    Node.complete_path.append(
+                        f"Target ({current_node.row}, {current_node.col} reached)"
+                    )
+                    neighbor.isTarget = False
 
         if targets == 0:
             break
+
+
+def dfs(start_node, targets, grid):
+    stack = [start_node]
+    start_node.isVisited = True
+    x = 0
+    while stack:
+        current_node = stack.pop()
+        x = x + 1
+        if current_node.isTarget:
+            Node.complete_path.append(
+                f"Target ({current_node.row}, {current_node.col} reached)"
+            )
+            targets -= 1
+            current_node.isTarget = False
+
+        if targets == 0:
+            current_node.path()
+            return True
+
+        successor(current_node, grid)
+        for child in current_node.children[::-1]:
+            if not child.isVisited and child.isOpen:
+                stack.append(child)
+                child.isVisited = True
+    if len(all_paths) == 0:
+        print("No solution found")
+        return False
 
 
 margins = input("How many rows and columns does the map have? (e.g. 5 8): ").split()
@@ -97,6 +126,7 @@ def mysplit(s):
     return cost, boost
 
 
+all_paths = []
 targets = 0
 grid = []
 for i in range(row):
@@ -110,11 +140,18 @@ for i in range(row):
 
 start_node = grid[0][0]
 start_node.isVisited = True
-# print(targets)
-bfs(start_node, grid, targets)
-# for i in range(row):
-#     for j in range(col):
-#         print(grid[i][j], end="\n")
-#     print()
+# bfs(start_node, grid, targets)
 
-print(Node.complete_path)
+# targets = 0
+# grid = []
+# for i in range(row):
+#     tmp = input().split()
+#     for j in range(col):
+#         cost, boost = mysplit(tmp[j])
+#         if "T" in tmp[j]:
+#             targets += 1
+#         tmp[j] = Node(i, j, cost, boost)
+#     grid.append(tmp)
+
+dfs(start_node, targets, grid)
+print((Node.complete_path)[::-1])

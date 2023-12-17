@@ -1,6 +1,8 @@
-1R 1 1 5 5 4 2C 1 15 1B
-1 1 5 3 5 5 4 5 X X
-5 1I 1 6 2 2 2 1 1 1T
-X X 1 6 5 5 2 1 1 X
-X X 1 X X 50 2 1C 1 X
-1 1 1 2 2 2T 2 1 1 1
+1R 1 1 5 5 4  2C 1  15 1B
+1  1 5 3 5 5  4  5  X  X
+5 1I 1 6 2 2  2  1  1  1T
+X  X 1 6 5 5  2  1  1  X
+X  X 1 X X 50 2  1C 1  X
+1  1 1 2 2 2T 2  1  1  1
+RR-UUU-RR-DD-RR-UU-RR-DDD-RDD
+DD-RR-UU-RR-DDD-RDD
