@@ -4,6 +4,7 @@ from collections import deque
 class Node:
     complete_path = []
     energy = 500
+    goal = (0, 0)
 
     @staticmethod
     def boosters(boost):
@@ -17,6 +18,13 @@ class Node:
             return 0, True
         else:
             return 0, False
+
+    @staticmethod
+    def reset(self):
+        self.isVisited = False
+        self.children = []
+        self.parent = []
+        self.depth = 0
 
     def __init__(self, row, col, energy_cost, boost=None):
         if energy_cost == "X":
@@ -32,21 +40,29 @@ class Node:
         self.isVisited = False
         self.children = []
         self.parent = []
+        self.depth = 0
 
     def path(self, p=""):
         if not isinstance(self.parent, list) and self.parent:
             parent_node, direction = self.parent
-            print(direction + "\n", self.row, self.col)
             Node.energy = Node.energy + self.boost - self.energy_cost
             Node.complete_path.append([direction, self.boost - self.energy_cost])
             parent_node.path()
 
     def add_children(self, child, direction):
         self.children.append(child)
-        child.add_parent(self, direction)
+        child.add_parent(self, direction, self.depth)
 
-    def add_parent(self, parent, direction):
-        self.parent = (parent, direction)
+    def add_parent(self, parent, direction, depth):
+        # Check if the node already has a parent
+        if self.parent:
+            # Replace the existing parent with the new one
+            self.parent = (parent, direction)
+            self.depth = depth + 1
+        else:
+            # If there's no existing parent, assign the new parent
+            self.parent = (parent, direction)
+            self.depth = depth + 1
 
     def __str__(self):
         return f"[({self.row},{self.col})| {self.energy_cost}| {self.boost}| {self.isOpen}| {self.isTarget}]"
@@ -78,26 +94,23 @@ def bfs(start_node, grid, targets):
                 queue.append(neighbor)
                 if neighbor.isTarget:
                     targets -= 1
-                    Node.complete_path.append(
-                        f"Target ({current_node.row}, {current_node.col} reached)"
-                    )
                     neighbor.isTarget = False
-
-        if targets == 0:
-            break
+                    Node.goal = (neighbor.row, neighbor.col)
+                    if targets == 0:
+                        neighbor.path()
+                        break
+                    else:
+                        bfs(neighbor, grid, targets)
+    if len(Node.complete_path) == 0:
+        print("No solution found")
+        return False
 
 
 def dfs(start_node, targets, grid):
     stack = [start_node]
-    start_node.isVisited = True
-    x = 0
     while stack:
         current_node = stack.pop()
-        x = x + 1
         if current_node.isTarget:
-            Node.complete_path.append(
-                f"Target ({current_node.row}, {current_node.col} reached)"
-            )
             targets -= 1
             current_node.isTarget = False
 
@@ -110,7 +123,51 @@ def dfs(start_node, targets, grid):
             if not child.isVisited and child.isOpen:
                 stack.append(child)
                 child.isVisited = True
-    if len(all_paths) == 0:
+    if len(Node.complete_path) == 0:
+        print("No solution found")
+        return False
+
+
+my_p = []
+
+
+def ids(start_node, grid, targets):
+    all_targets = targets
+    for depth in range(500):
+        for r in grid:
+            for n in r:
+                Node.reset(n)
+        targets = all_targets
+        start_node.isVisited = True
+        start_node.depth = 0
+        stack = [start_node]
+        while stack:
+            current_node = stack.pop()
+            if current_node.depth > depth:
+                continue
+
+            if current_node.isTarget:
+                current_node.path()
+                print((Node.complete_path)[::-1])
+                Node.complete_path = []
+                targets -= 1
+                current_node.isTarget = False
+                if targets > 0:
+                    return ids(current_node, grid, targets)
+
+            if targets == 0:
+                current_node.path()
+                print("depth: ", depth)
+                Node.complete_path = []
+                return True
+
+            successor(current_node, grid)
+            for child in current_node.children[::-1]:
+                if not (child.isVisited) and child.isOpen:
+                    stack.append(child)
+                    child.isVisited = True
+
+    if len(Node.complete_path) == 0:
         print("No solution found")
         return False
 
@@ -126,7 +183,6 @@ def mysplit(s):
     return cost, boost
 
 
-all_paths = []
 targets = 0
 grid = []
 for i in range(row):
@@ -140,18 +196,45 @@ for i in range(row):
 
 start_node = grid[0][0]
 start_node.isVisited = True
-# bfs(start_node, grid, targets)
+start_node.depth = 0
+start_node.isTarget = False
 
-# targets = 0
-# grid = []
-# for i in range(row):
-#     tmp = input().split()
-#     for j in range(col):
-#         cost, boost = mysplit(tmp[j])
-#         if "T" in tmp[j]:
-#             targets += 1
-#         tmp[j] = Node(i, j, cost, boost)
-#     grid.append(tmp)
+bfs(start_node, grid, targets)
+print((Node.complete_path)[::-1])
+Node.complete_path = []
 
+targets = 0
+grid = []
+for i in range(row):
+    tmp = input().split()
+    for j in range(col):
+        cost, boost = mysplit(tmp[j])
+        if "T" in tmp[j]:
+            targets += 1
+        tmp[j] = Node(i, j, cost, boost)
+    grid.append(tmp)
+
+start_node = grid[0][0]
+start_node.isVisited = True
+start_node.depth = 0
 dfs(start_node, targets, grid)
+print((Node.complete_path)[::-1])
+Node.complete_path = []
+
+targets = 0
+grid = []
+for i in range(row):
+    tmp = input().split()
+    for j in range(col):
+        cost, boost = mysplit(tmp[j])
+        if "T" in tmp[j]:
+            targets += 1
+        tmp[j] = Node(i, j, cost, boost)
+    grid.append(tmp)
+
+start_node = grid[0][0]
+start_node.isVisited = True
+start_node.depth = 0
+
+ids(start_node, grid, targets)
 print((Node.complete_path)[::-1])
